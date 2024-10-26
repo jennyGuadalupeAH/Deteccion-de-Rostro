@@ -39,27 +39,32 @@ document.getElementById('upload-form').addEventListener('submit', event => {
    fetch('/get_key_facials', {
       method: 'POST',
       body: formData
-   })
-      .then(response => response.json())
-      .then(data => {
-         // Detener el intervalo de carga
-         clearInterval(loadingInterval);
-         loadingElement.style.display = 'none';
-
-         if (data.error) {
-            alert(data.error);
-            return;
-         }
-
-         var imagen_original = document.getElementById('imagen_original');
-         var contenedor_imagen = document.getElementById('image-ploted');
-         imagen_original.src = `data:image/jpeg;base64,${data.image_base64}`;
-         contenedor_imagen.classList.toggle('image-ploted');
-      })
-      .catch(error => {
-         // Detener el intervalo de carga en caso de error
-         clearInterval(loadingInterval);
-         loadingElement.style.display = 'none';
-         console.error('ERROR', error);
+  })
+  .then(response => {
+      // Imprimir la respuesta cruda para depurar
+      return response.text().then(text => {
+          console.log('Raw response:', text); // Imprime la respuesta cruda
+          try {
+              return JSON.parse(text); // Intenta analizar el JSON manualmente
+          } catch (e) {
+              console.error('Error parsing JSON:', e); // Maneja el error de análisis
+              throw e; // Lanza el error para que caiga en el .catch
+          }
       });
+  })
+  .then(data => {
+      clearInterval(loadingInterval);
+      loadingElement.style.display = 'none';
+      
+      var imagen_original = document.getElementById('imagen_original');
+      var contenedor_imagen = document.getElementById('image-ploted');
+      imagen_original.src = `data:image/jpeg;base64,${data.image_base64}`;
+      contenedor_imagen.classList.toggle('image-ploted');
+  })
+  .catch(error => {
+      clearInterval(loadingInterval);
+      loadingElement.style.display = 'none';
+      console.error('ERROR', error);
+  });
+  
 });
