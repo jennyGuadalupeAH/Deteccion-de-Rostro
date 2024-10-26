@@ -14,28 +14,36 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
-   # Usar render_template en lugar de send_static_file
-   return render_template('index.html')
+    return render_template('index.html')
 
 @app.route('/get_key_facials', methods=['POST'])
 def detectar_Puntos_Faciales():
+    # Cargar la imagen
+    archivo = request.files.get('archivo')
+    
+    if not archivo or archivo.filename == '':
+        return jsonify({'error': 'No se cargó ninguna imagen'}), 400  # Cambia el código de respuesta a 400
 
-   # Cargar la imagen
-   archivo = request.files['archivo']
-   if archivo.filename == '':
-      return jsonify({'error': 'No se cargó ninguna imagen'})     
+    # Verificar que el archivo sea una imagen
+    if not archivo.content_type.startswith('image/'):
+        return jsonify({'error': 'El archivo no es una imagen válida'}), 400
 
-   if archivo:
-      image_path = os.path.join(app.config['UPLOAD_FOLDER'], archivo.filename)
-      archivo.save(image_path)
+    try:
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], archivo.filename)
+        archivo.save(image_path)
 
-      # Llamar a la función para procesar la imagen pasando como parametro la ruta de nuestra imagen
-      resultado = procesar_imagen(image_path)
-      
-      # Responder con la ruta de la imagen procesada
-      return jsonify(resultado)
+        # Llamar a la función para procesar la imagen
+        resultado = procesar_imagen(image_path)
+
+        # Responder con el resultado procesado
+        return jsonify({'resultado': resultado, 'image_url': f'/static/images/{archivo.filename}'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500  # Devuelve el error si ocurre algún problema
 
 if __name__ == '__main__':
-   if not os.path.exists(app.config['UPLOAD_FOLDER']):
-      os.makedirs(app.config['UPLOAD_FOLDER'])
-   app.run(debug=True, host="0.0.0.0", port=os.getenv("PORT", default=5000))
+    # Crear la carpeta de carga si no existe
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+        
+    app.run(debug=True, host="0.0.0.0", port=os.getenv("PORT", default=5000))
