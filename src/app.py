@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from services.face_detection import procesar_imagen
+from .services.face_detection import procesar_imagen
 import os
 from flask_cors import CORS
 
